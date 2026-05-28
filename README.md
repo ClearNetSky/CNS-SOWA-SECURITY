@@ -5,10 +5,10 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/AristarhUcolov/CNS-SOWA-SECURITY/releases"><img src="https://img.shields.io/github/v/release/AristarhUcolov/CNS-SOWA-SECURITY?color=blue&label=version" alt="Version"></a>
-  <a href="https://github.com/AristarhUcolov/CNS-SOWA-SECURITY/blob/main/LICENSE"><img src="https://img.shields.io/github/license/AristarhUcolov/CNS-SOWA-SECURITY" alt="License"></a>
-  <a href="https://github.com/AristarhUcolov/CNS-SOWA-SECURITY"><img src="https://img.shields.io/badge/Go-1.25+-00ADD8?logo=go" alt="Go"></a>
-  <a href="https://github.com/AristarhUcolov/CNS-SOWA-SECURITY/stargazers"><img src="https://img.shields.io/github/stars/AristarhUcolov/CNS-SOWA-SECURITY?style=flat" alt="Stars"></a>
+  <a href="https://github.com/ClearNetSky/CNS-SOWA-SECURITY/releases"><img src="https://img.shields.io/github/v/release/AristarhUcolov/CNS-SOWA-SECURITY?color=blue&label=version" alt="Version"></a>
+  <a href="https://github.com/ClearNetSky/CNS-SOWA-SECURITY/blob/main/LICENSE"><img src="https://img.shields.io/github/license/AristarhUcolov/CNS-SOWA-SECURITY" alt="License"></a>
+  <a href="https://github.com/ClearNetSky/CNS-SOWA-SECURITY"><img src="https://img.shields.io/badge/Go-1.25+-00ADD8?logo=go" alt="Go"></a>
+  <a href="https://github.com/ClearNetSky/CNS-SOWA-SECURITY/stargazers"><img src="https://img.shields.io/github/stars/AristarhUcolov/CNS-SOWA-SECURITY?style=flat" alt="Stars"></a>
 </p>
 
 <p align="center">
@@ -45,7 +45,7 @@
 
 ## 🚀 Быстрый старт
 
-1. Скачайте `sowa-security.exe` из [Releases](https://github.com/AristarhUcolov/CNS-SOWA-SECURITY/releases)
+1. Скачайте `sowa-security.exe` из [Releases](https://github.com/ClearNetSky/CNS-SOWA-SECURITY/releases)
 2. Запустите EXE файл (от имени администратора для DHCP)
 3. Откройте браузер: `http://localhost:8080`
 4. Настройте DNS вашего устройства на `127.0.0.1`
@@ -53,7 +53,7 @@
 ## 🔧 Сборка из исходников
 
 ```bash
-git clone https://github.com/AristarhUcolov/CNS-SOWA-SECURITY.git
+git clone https://github.com/ClearNetSky/CNS-SOWA-SECURITY.git
 cd CNS-SOWA-SECURITY
 go mod tidy
 go build -o build/sowa-security.exe ./cmd/sowa/
@@ -88,9 +88,9 @@ go build -o build/sowa-security.exe ./cmd/sowa/
 
 ## 🔗 Ссылки
 
-- 🌐 [Сайт Clear Net Sky](https://aristarhucolov.github.io/C.N.S-Clear.Net.Sky-S.O.W.A/)
-- 📋 [DNS-списки блокировки (S.O.W.A Lists)](https://github.com/AristarhUcolov/CNS-SOWA-DNS-BLACKLIST-FILTERING)
-- 🔐 [S.O.W.A Security Software](https://github.com/AristarhUcolov/CNS-SOWA-SECURITY)
+- 🌐 [Сайт Clear Net Sky](https://clearnetsky.github.io/C.N.S-Clear.Net.Sky-S.O.W.A/)
+- 📋 [DNS-списки блокировки (S.O.W.A Lists)](https://github.com/ClearNetSky/CNS-SOWA-DNS-BLACKLIST-FILTERING)
+- 🔐 [S.O.W.A Security Software](https://github.com/ClearNetSky/CNS-SOWA-SECURITY)
 
 ## 🙏 Благодарности
 
@@ -161,7 +161,7 @@ go build -o build/sowa-security.exe ./cmd/sowa/
 
 ## 🚀 Quick Start
 
-1. Download `sowa-security.exe` from [Releases](https://github.com/AristarhUcolov/CNS-SOWA-SECURITY/releases)
+1. Download `sowa-security.exe` from [Releases](https://github.com/ClearNetSky/CNS-SOWA-SECURITY/releases)
 2. Run the EXE file (as administrator for DHCP)
 3. Open browser: `http://localhost:8080`
 4. Set your device's DNS to `127.0.0.1`
@@ -169,7 +169,7 @@ go build -o build/sowa-security.exe ./cmd/sowa/
 ## 🔧 Build from Source
 
 ```bash
-git clone https://github.com/AristarhUcolov/CNS-SOWA-SECURITY.git
+git clone https://github.com/ClearNetSky/CNS-SOWA-SECURITY.git
 cd CNS-SOWA-SECURITY
 go mod tidy
 go build -o build/sowa-security.exe ./cmd/sowa/
@@ -204,9 +204,9 @@ Or use `build.bat` on Windows.
 
 ## 🔗 Links
 
-- 🌐 [Clear Net Sky Website](https://aristarhucolov.github.io/C.N.S-Clear.Net.Sky-S.O.W.A/)
-- 📋 [DNS Blacklist Filtering (S.O.W.A Lists)](https://github.com/AristarhUcolov/CNS-SOWA-DNS-BLACKLIST-FILTERING)
-- 🔐 [S.O.W.A Security Software](https://github.com/AristarhUcolov/CNS-SOWA-SECURITY)
+- 🌐 [Clear Net Sky Website](https://clearnetsky.github.io/C.N.S-Clear.Net.Sky-S.O.W.A/)
+- 📋 [DNS Blacklist Filtering (S.O.W.A Lists)](https://github.com/ClearNetSky/CNS-SOWA-DNS-BLACKLIST-FILTERING)
+- 🔐 [S.O.W.A Security Software](https://github.com/ClearNetSky/CNS-SOWA-SECURITY)
 
 ## 🙏 Acknowledgments
 

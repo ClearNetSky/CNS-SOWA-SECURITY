@@ -3,7 +3,7 @@ package filtering
 import (
 	"strings"
 
-	"github.com/AristarhUcolov/CNS-SOWA-SECURITY/internal/config"
+	"github.com/ClearNetSky/CNS-SOWA-SECURITY/internal/config"
 )
 
 // SafeSearch enforces safe search on search engines

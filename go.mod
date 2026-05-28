@@ -1,4 +1,4 @@
-module github.com/AristarhUcolov/CNS-SOWA-SECURITY
+module github.com/ClearNetSky/CNS-SOWA-SECURITY
 
 go 1.25.0
 

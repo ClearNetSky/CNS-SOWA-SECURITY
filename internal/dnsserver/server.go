@@ -10,9 +10,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/AristarhUcolov/CNS-SOWA-SECURITY/internal/config"
-	"github.com/AristarhUcolov/CNS-SOWA-SECURITY/internal/filtering"
-	"github.com/AristarhUcolov/CNS-SOWA-SECURITY/internal/stats"
+	"github.com/ClearNetSky/CNS-SOWA-SECURITY/internal/config"
+	"github.com/ClearNetSky/CNS-SOWA-SECURITY/internal/filtering"
+	"github.com/ClearNetSky/CNS-SOWA-SECURITY/internal/stats"
 	"github.com/miekg/dns"
 )
 

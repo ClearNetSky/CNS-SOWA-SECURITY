@@ -15,7 +15,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/AristarhUcolov/CNS-SOWA-SECURITY/internal/config"
+	"github.com/ClearNetSky/CNS-SOWA-SECURITY/internal/config"
 )
 
 // Result represents the result of a domain check

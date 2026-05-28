@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/AristarhUcolov/CNS-SOWA-SECURITY/internal/config"
+	"github.com/ClearNetSky/CNS-SOWA-SECURITY/internal/config"
 )
 
 // DHCP message types

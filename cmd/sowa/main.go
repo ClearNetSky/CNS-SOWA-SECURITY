@@ -13,13 +13,13 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/AristarhUcolov/CNS-SOWA-SECURITY/internal/api"
-	"github.com/AristarhUcolov/CNS-SOWA-SECURITY/internal/auth"
-	"github.com/AristarhUcolov/CNS-SOWA-SECURITY/internal/config"
-	"github.com/AristarhUcolov/CNS-SOWA-SECURITY/internal/dhcp"
-	"github.com/AristarhUcolov/CNS-SOWA-SECURITY/internal/dnsserver"
-	"github.com/AristarhUcolov/CNS-SOWA-SECURITY/internal/filtering"
-	"github.com/AristarhUcolov/CNS-SOWA-SECURITY/internal/stats"
+	"github.com/ClearNetSky/CNS-SOWA-SECURITY/internal/api"
+	"github.com/ClearNetSky/CNS-SOWA-SECURITY/internal/auth"
+	"github.com/ClearNetSky/CNS-SOWA-SECURITY/internal/config"
+	"github.com/ClearNetSky/CNS-SOWA-SECURITY/internal/dhcp"
+	"github.com/ClearNetSky/CNS-SOWA-SECURITY/internal/dnsserver"
+	"github.com/ClearNetSky/CNS-SOWA-SECURITY/internal/filtering"
+	"github.com/ClearNetSky/CNS-SOWA-SECURITY/internal/stats"
 )
 
 const (
@@ -39,7 +39,7 @@ const (
 ║         DNS Protection & Filtering                           ║
 ║         by C.N.S (Clear Net Sky)                             ║
 ║                                                              ║
-║         https://github.com/AristarhUcolov/CNS-SOWA-SECURITY ║
+║         https://github.com/ClearNetSky/CNS-SOWA-SECURITY ║
 ║                                                              ║
 ╚══════════════════════════════════════════════════════════════╝
 `

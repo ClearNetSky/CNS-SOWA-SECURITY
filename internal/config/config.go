@@ -290,7 +290,7 @@ func DefaultConfig() *Config {
 
 // defaultBlockLists returns the default CNS-SOWA blocklists
 func defaultBlockLists() []BlockListConfig {
-	baseURL := "https://raw.githubusercontent.com/AristarhUcolov/CNS-SOWA-DNS-BLACKLIST-FILTERING/main/blacklist"
+	baseURL := "https://raw.githubusercontent.com/ClearNetSky/CNS-SOWA-DNS-BLACKLIST-FILTERING/main/blacklist"
 	lists := []struct {
 		name string
 		file string
