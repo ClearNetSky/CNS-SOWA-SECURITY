@@ -150,8 +150,8 @@ document.addEventListener('input', (e) => {
         const bar = document.getElementById('passwordStrength');
         if (!bar) return;
         let strength = 0;
-        if (val.length >= 4) strength += 25;
         if (val.length >= 8) strength += 25;
+        if (val.length >= 12) strength += 25;
         if (/[A-Z]/.test(val) && /[a-z]/.test(val)) strength += 25;
         if (/[0-9!@#$%^&*]/.test(val)) strength += 25;
         const colors = { 25: '#ff4466', 50: '#ffaa00', 75: '#00aaff', 100: '#00ff88' };
@@ -168,8 +168,8 @@ function initLoginForms() {
         const confirm = document.getElementById('setupPasswordConfirm').value;
         const errEl = document.getElementById('setupError');
 
-        if (password.length < 4) {
-            if (errEl) { errEl.textContent = 'Password must be at least 4 characters'; errEl.style.display = 'block'; errEl.classList.add('visible'); }
+        if (password.length < 8) {
+            if (errEl) { errEl.textContent = 'Password must be at least 8 characters'; errEl.style.display = 'block'; errEl.classList.add('visible'); }
             return;
         }
         if (password !== confirm) {
@@ -531,7 +531,73 @@ function animateNumber(id, target) {
     requestAnimationFrame(tick);
 }
 
+// Reads the current theme's colors from CSS variables so charts
+// always match the active (dark/light) theme.
+function chartTheme() {
+    const styles = getComputedStyle(document.documentElement);
+    const v = (name, fallback) => (styles.getPropertyValue(name).trim() || fallback);
+    return {
+        accent: v('--accent-primary', '#00d4ff'),
+        danger: v('--danger', '#ff5c7a'),
+        text: v('--text-secondary', '#97a3bd'),
+        muted: v('--text-muted', '#5d6a88'),
+        grid: hexToRgba(v('--border-color', '#1b2540'), 0.5),
+        tooltipBg: v('--bg-elevated', '#121a2c'),
+        tooltipBorder: v('--border-strong', '#26335a'),
+        textPrimary: v('--text-primary', '#e8ecf6'),
+    };
+}
+
+function hexToRgba(hex, alpha) {
+    const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex.trim());
+    if (!m) return hex;
+    return `rgba(${parseInt(m[1], 16)}, ${parseInt(m[2], 16)}, ${parseInt(m[3], 16)}, ${alpha})`;
+}
+
+function chartTooltipOptions(t) {
+    return {
+        backgroundColor: t.tooltipBg,
+        titleColor: t.textPrimary,
+        bodyColor: t.text,
+        borderColor: t.tooltipBorder,
+        borderWidth: 1,
+        cornerRadius: 8,
+        padding: 12,
+    };
+}
+
+// Re-applies theme colors to existing charts (used on theme toggle)
+function restyleCharts() {
+    const t = chartTheme();
+    [queriesChart, queryTypesChart].forEach(chart => {
+        if (!chart) return;
+        const legend = chart.options.plugins?.legend;
+        if (legend?.labels) legend.labels.color = t.text;
+        if (chart.options.plugins?.tooltip) {
+            Object.assign(chart.options.plugins.tooltip, chartTooltipOptions(t));
+        }
+        if (chart.options.scales) {
+            Object.values(chart.options.scales).forEach(scale => {
+                if (scale.ticks) scale.ticks.color = t.muted;
+                if (scale.grid) scale.grid.color = t.grid;
+            });
+        }
+        chart.update('none');
+    });
+    if (queriesChart) {
+        const [total, blocked] = queriesChart.data.datasets;
+        total.borderColor = t.accent;
+        total.backgroundColor = hexToRgba(t.accent, 0.08);
+        total.pointHoverBackgroundColor = t.accent;
+        blocked.borderColor = t.danger;
+        blocked.backgroundColor = hexToRgba(t.danger, 0.08);
+        blocked.pointHoverBackgroundColor = t.danger;
+        queriesChart.update('none');
+    }
+}
+
 function updateCharts(data) {
+    const t = chartTheme();
     const ctx1 = document.getElementById('queriesChart')?.getContext('2d');
     if (ctx1) {
         const hours = Array.from({ length: 24 }, (_, i) => `${i}:00`);
@@ -551,25 +617,25 @@ function updateCharts(data) {
                     datasets: [{
                         label: 'Total Queries',
                         data: hourlyQueries,
-                        borderColor: '#00d4ff',
-                        backgroundColor: 'rgba(0, 212, 255, 0.08)',
+                        borderColor: t.accent,
+                        backgroundColor: hexToRgba(t.accent, 0.08),
                         fill: true,
                         tension: 0.4,
                         borderWidth: 2,
                         pointRadius: 0,
                         pointHoverRadius: 4,
-                        pointHoverBackgroundColor: '#00d4ff',
+                        pointHoverBackgroundColor: t.accent,
                     }, {
                         label: 'Blocked',
                         data: hourlyBlocked,
-                        borderColor: '#ff4466',
-                        backgroundColor: 'rgba(255, 68, 102, 0.08)',
+                        borderColor: t.danger,
+                        backgroundColor: hexToRgba(t.danger, 0.08),
                         fill: true,
                         tension: 0.4,
                         borderWidth: 2,
                         pointRadius: 0,
                         pointHoverRadius: 4,
-                        pointHoverBackgroundColor: '#ff4466',
+                        pointHoverBackgroundColor: t.danger,
                     }]
                 },
                 options: {
@@ -577,20 +643,12 @@ function updateCharts(data) {
                     maintainAspectRatio: false,
                     interaction: { intersect: false, mode: 'index' },
                     plugins: {
-                        legend: { labels: { color: '#8888aa', font: { size: 11 }, usePointStyle: true, pointStyle: 'circle' } },
-                        tooltip: {
-                            backgroundColor: 'rgba(26, 26, 46, 0.95)',
-                            titleColor: '#e0e0e8',
-                            bodyColor: '#8888aa',
-                            borderColor: '#2a2a45',
-                            borderWidth: 1,
-                            cornerRadius: 8,
-                            padding: 12,
-                        }
+                        legend: { labels: { color: t.text, font: { size: 11 }, usePointStyle: true, pointStyle: 'circle' } },
+                        tooltip: chartTooltipOptions(t)
                     },
                     scales: {
-                        x: { ticks: { color: '#555577', font: { size: 10 } }, grid: { color: 'rgba(42,42,69,0.3)' } },
-                        y: { ticks: { color: '#555577', font: { size: 10 } }, grid: { color: 'rgba(42,42,69,0.3)' }, beginAtZero: true }
+                        x: { ticks: { color: t.muted, font: { size: 10 } }, grid: { color: t.grid } },
+                        y: { ticks: { color: t.muted, font: { size: 10 } }, grid: { color: t.grid }, beginAtZero: true }
                     }
                 }
             });
@@ -616,8 +674,8 @@ function updateCharts(data) {
                     datasets: [{
                         data: values.length > 0 ? values : [1],
                         backgroundColor: [
-                            '#00d4ff', '#7b2fff', '#ff4466', '#00ff88',
-                            '#ffaa00', '#ff66aa', '#00aaff', '#88ff00'
+                            '#00d4ff', '#7c5cff', '#ff5c7a', '#2ee6a8',
+                            '#ffb224', '#ff66aa', '#38bdf8', '#a3e635'
                         ],
                         borderWidth: 0,
                         hoverOffset: 8,
@@ -626,21 +684,13 @@ function updateCharts(data) {
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    cutout: '65%',
+                    cutout: '68%',
                     plugins: {
                         legend: {
                             position: 'bottom',
-                            labels: { color: '#8888aa', font: { size: 11 }, padding: 12, usePointStyle: true, pointStyle: 'circle' }
+                            labels: { color: t.text, font: { size: 11 }, padding: 12, usePointStyle: true, pointStyle: 'circle' }
                         },
-                        tooltip: {
-                            backgroundColor: 'rgba(26, 26, 46, 0.95)',
-                            titleColor: '#e0e0e8',
-                            bodyColor: '#8888aa',
-                            borderColor: '#2a2a45',
-                            borderWidth: 1,
-                            cornerRadius: 8,
-                            padding: 12,
-                        }
+                        tooltip: chartTooltipOptions(t)
                     }
                 }
             });
@@ -673,22 +723,22 @@ function fillTopTable(tableId, dataMap) {
         let actionCell = '';
         if (isClients) {
             // Click to view client's queries
-            actionCell = `<button class="btn btn-xs" onclick="filterQueryLogByClient('${escapeHtml(key)}')" title="View queries"><i class="fas fa-eye"></i></button>`;
+            actionCell = `<button class="btn btn-xs" onclick="filterQueryLogByClient('${jsArg(key)}')" title="View queries"><i class="fas fa-eye"></i></button>`;
         } else if (isBlocked) {
-            actionCell = `<button class="btn btn-xs btn-success" onclick="quickAllowDomain('${escapeHtml(key)}')" title="Allow"><i class="fas fa-check"></i></button>`;
+            actionCell = `<button class="btn btn-xs btn-success" onclick="quickAllowDomain('${jsArg(key)}')" title="Allow"><i class="fas fa-check"></i></button>`;
         } else {
-            actionCell = `<button class="btn btn-xs btn-danger" onclick="quickBlockDomain('${escapeHtml(key)}')" title="Block"><i class="fas fa-ban"></i></button>`;
+            actionCell = `<button class="btn btn-xs btn-danger" onclick="quickBlockDomain('${jsArg(key)}')" title="Block"><i class="fas fa-ban"></i></button>`;
         }
         let nameCell;
         if (isClients) {
             nameCell = `<td>
-                <span class="client-link" onclick="filterQueryLogByClient('${escapeHtml(key)}')" title="Click to view queries">
-                    <i class="fas fa-desktop" style="color:var(--accent-color);margin-right:6px;"></i>${escapeHtml(key)}
+                <span class="client-link" onclick="filterQueryLogByClient('${jsArg(key)}')" title="Click to view queries">
+                    <i class="fas fa-desktop" style="color:var(--accent-primary);margin-right:6px;"></i>${escapeHtml(key)}
                 </span>
             </td>`;
         } else {
             nameCell = `<td class="ql-domain-cell">
-                <span class="domain-link" onclick="testDomain('${escapeHtml(key)}')" title="Test this domain">${escapeHtml(key)}</span>
+                <span class="domain-link" onclick="testDomain('${jsArg(key)}')" title="Test this domain">${escapeHtml(key)}</span>
                 <span class="ql-whois-icon" data-domain="${escapeHtml(key)}" onmouseenter="showWhoisTooltip(event, this)" onmouseleave="hideWhoisTooltip()" title="WHOIS info">
                     <i class="fas fa-info-circle"></i>
                 </span>
@@ -1309,18 +1359,18 @@ async function loadQueryLog() {
                 const timeAgo = formatRelativeTime(dt);
                 const fullTime = dt.toLocaleString();
                 const actionBtn = entry.blocked
-                    ? `<button class="btn btn-xs btn-success" onclick="quickAllowDomain('${escapeHtml(entry.domain)}')" title="Allow this domain"><i class="fas fa-check"></i></button>`
-                    : `<button class="btn btn-xs btn-danger" onclick="quickBlockDomain('${escapeHtml(entry.domain)}')" title="Block this domain"><i class="fas fa-ban"></i></button>`;
+                    ? `<button class="btn btn-xs btn-success" onclick="quickAllowDomain('${jsArg(entry.domain)}')" title="Allow this domain"><i class="fas fa-check"></i></button>`
+                    : `<button class="btn btn-xs btn-danger" onclick="quickBlockDomain('${jsArg(entry.domain)}')" title="Block this domain"><i class="fas fa-ban"></i></button>`;
                 return `<tr class="${rowClass}">
                     <td><span class="ql-time" title="${escapeHtml(fullTime)}">${timeAgo}</span></td>
                     <td class="ql-domain-cell">
-                        <span class="ql-domain-name" title="Click to copy" onclick="copyText('${escapeHtml(entry.domain)}')">${escapeHtml(entry.domain)}</span>
+                        <span class="ql-domain-name" title="Click to copy" onclick="copyText('${jsArg(entry.domain)}')">${escapeHtml(entry.domain)}</span>
                         <span class="ql-whois-icon" data-domain="${escapeHtml(entry.domain)}" onmouseenter="showWhoisTooltip(event, this)" onmouseleave="hideWhoisTooltip()" title="WHOIS info">
                             <i class="fas fa-info-circle"></i>
                         </span>
                     </td>
                     <td><span class="ql-type-badge">${escapeHtml(entry.type)}</span></td>
-                    <td><span class="ql-client" title="Click to filter by this client" onclick="filterQueryLogByClient('${escapeHtml(entry.client_ip)}')">${escapeHtml(entry.client_ip)}</span></td>
+                    <td><span class="ql-client" title="Click to filter by this client" onclick="filterQueryLogByClient('${jsArg(entry.client_ip)}')">${escapeHtml(entry.client_ip)}</span></td>
                     <td>${status}</td>
                     <td>${escapeHtml(entry.duration)}</td>
                     <td>${actionBtn}</td>
@@ -1497,21 +1547,21 @@ async function loadClients() {
         // Show active (auto-detected) clients from DNS queries
         const activeEntries = Object.entries(activeClients).sort((a, b) => b[1] - a[1]);
         if (activeEntries.length > 0) {
-            html += '<div class="section-label" style="padding:12px 0 8px;color:#8888aa;font-size:0.85em;font-weight:600;text-transform:uppercase;letter-spacing:1px;"><i class="fas fa-wifi" style="margin-right:6px;color:#00d4aa;"></i>Active Clients (Auto-detected)</div>';
+            html += '<div class="section-label"><i class="fas fa-wifi" style="margin-right:6px;color:var(--success);"></i>Active Clients (Auto-detected)</div>';
             html += activeEntries.map(([ip, queries]) => `
                 <div class="client-item">
                     <div class="client-info">
-                        <div class="name"><i class="fas fa-desktop" style="color:#00d4aa;margin-right:8px;"></i>${escapeHtml(ip)}</div>
+                        <div class="name"><i class="fas fa-desktop" style="color:var(--success);margin-right:8px;"></i>${escapeHtml(ip)}</div>
                         <div class="ids">${formatNumber(queries)} queries</div>
                     </div>
-                    <span class="badge active" style="font-size:0.75em;">Connected</span>
+                    <span class="badge active">Connected</span>
                 </div>
             `).join('');
         }
 
         // Show configured (manual) clients
         if (clients && clients.length > 0) {
-            html += '<div class="section-label" style="padding:16px 0 8px;color:#8888aa;font-size:0.85em;font-weight:600;text-transform:uppercase;letter-spacing:1px;"><i class="fas fa-cog" style="margin-right:6px;"></i>Configured Clients</div>';
+            html += '<div class="section-label"><i class="fas fa-cog" style="margin-right:6px;"></i>Configured Clients</div>';
             html += clients.map((client, i) => `
                 <div class="client-item">
                     <div class="client-info">
@@ -1820,9 +1870,25 @@ function formatNumber(num) {
 
 function escapeHtml(str) {
     if (!str) return '';
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
+    // Escapes quotes as well so values are safe inside HTML attributes
+    // (e.g. onclick="...('${escapeHtml(x)}')") — DNS query names can
+    // contain arbitrary characters and must never break out of markup.
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+        .replace(/`/g, '&#96;');
+}
+
+// Makes a value safe to embed inside single quotes of an inline
+// event handler: onclick="fn('${jsArg(value)}')". Escapes for the JS
+// string first, then for the HTML attribute.
+function jsArg(str) {
+    return escapeHtml(String(str ?? '')
+        .replace(/\\/g, '\\\\')
+        .replace(/'/g, "\\'"));
 }
 
 function getValue(id) {
@@ -2003,7 +2069,7 @@ function renderWhoisTooltip(tooltip, data) {
             `).join('')}
         </div>
         <div class="whois-tooltip-footer">
-            <a href="#" onclick="event.preventDefault();document.getElementById('whoisDomain').value='${escapeHtml(data.domain || '')}';navigateToPage('filters');lookupWhois('${escapeHtml(data.domain || '')}');">
+            <a href="#" onclick="event.preventDefault();document.getElementById('whoisDomain').value='${jsArg(data.domain || '')}';navigateToPage('filters');lookupWhois('${jsArg(data.domain || '')}');">
                 <i class="fas fa-external-link-alt"></i> Full WHOIS
             </a>
         </div>
@@ -2047,6 +2113,8 @@ function applyTheme(theme) {
     if (label) {
         label.textContent = theme === 'dark' ? 'Night Mode' : 'Light Mode';
     }
+    // Charts must pick up the new theme's colors
+    restyleCharts();
 }
 
 // ==================== Keyboard Shortcuts ====================
@@ -2106,18 +2174,18 @@ async function loadSessions() {
 
         container.innerHTML = sessions.map(s => {
             const isCurrent = s.token === currentToken;
-            const created = new Date(s.created).toLocaleString();
-            const lastUsed = new Date(s.last_used).toLocaleString();
+            const created = s.created_at ? new Date(s.created_at).toLocaleString() : 'Unknown';
+            const expires = s.expires_at ? new Date(s.expires_at).toLocaleString() : 'Unknown';
             return `
                 <div class="session-item${isCurrent ? ' current' : ''}">
                     <div class="session-info">
                         <div class="session-ip"><i class="fas fa-globe"></i> ${escapeHtml(s.ip || 'Unknown')}</div>
                         <div class="session-agent"><i class="fas fa-desktop"></i> ${escapeHtml(s.user_agent || 'Unknown')}</div>
                         <div class="session-time"><i class="fas fa-clock"></i> Created: ${created}</div>
-                        <div class="session-time"><i class="fas fa-history"></i> Last used: ${lastUsed}</div>
+                        <div class="session-time"><i class="fas fa-hourglass-half"></i> Expires: ${expires}</div>
                         ${isCurrent ? '<span class="badge badge-success">Current Session</span>' : ''}
                     </div>
-                    ${!isCurrent ? `<button class="btn btn-danger btn-sm" onclick="revokeSession('${s.token}')"><i class="fas fa-times"></i> Revoke</button>` : ''}
+                    ${!isCurrent ? `<button class="btn btn-danger btn-sm" onclick="revokeSession('${jsArg(s.token)}')"><i class="fas fa-times"></i> Revoke</button>` : ''}
                 </div>
             `;
         }).join('');

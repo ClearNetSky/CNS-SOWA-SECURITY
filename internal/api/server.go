@@ -3,20 +3,26 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"log"
 	"net"
 	"net/http"
+	"os"
+	"path"
+	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
 	"time"
 
+	cnssowa "github.com/ClearNetSky/CNS-SOWA-SECURITY"
 	"github.com/ClearNetSky/CNS-SOWA-SECURITY/internal/auth"
 	"github.com/ClearNetSky/CNS-SOWA-SECURITY/internal/config"
 	"github.com/ClearNetSky/CNS-SOWA-SECURITY/internal/dhcp"
 	"github.com/ClearNetSky/CNS-SOWA-SECURITY/internal/dnsserver"
 	"github.com/ClearNetSky/CNS-SOWA-SECURITY/internal/filtering"
 	"github.com/ClearNetSky/CNS-SOWA-SECURITY/internal/stats"
+	"github.com/ClearNetSky/CNS-SOWA-SECURITY/internal/version"
 	"github.com/miekg/dns"
 )
 
@@ -57,7 +63,7 @@ func (s *Server) Start() error {
 	addr := fmt.Sprintf("%s:%d", s.cfg.Web.BindHost, s.cfg.Web.Port)
 
 	// Wrap handler with auth middleware
-	handler := s.corsMiddleware(s.auth.Middleware(s.mux, []string{
+	handler := s.securityMiddleware(s.auth.Middleware(s.mux, []string{
 		"/api/auth/login",
 		"/api/auth/setup",
 		"/api/auth/status",
@@ -69,7 +75,7 @@ func (s *Server) Start() error {
 		Handler: handler,
 	}
 
-	log.Printf("[Web] Starting admin interface on http://%s", addr)
+	log.Printf("[Web] Starting admin interface on http://%s:%d", displayHost(s.cfg.Web.BindHost), s.cfg.Web.Port)
 
 	if s.cfg.Web.TLS && s.cfg.Web.CertFile != "" && s.cfg.Web.KeyFile != "" {
 		log.Printf("[Web] TLS enabled")
@@ -142,21 +148,63 @@ func (s *Server) registerRoutes() {
 	s.mux.HandleFunc("/api/whois", s.handleWhois)
 
 	// Static files (web UI)
-	s.mux.Handle("/", http.FileServer(http.Dir(s.webDir)))
+	s.mux.Handle("/", s.staticHandler())
 }
 
-// corsMiddleware adds CORS headers
-func (s *Server) corsMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+// staticHandler serves the web UI. It prefers a web/ directory on disk
+// (useful during development), and falls back to the UI embedded in the
+// binary, so a standalone EXE always has a working dashboard.
+// Unknown extension-less paths serve the app shell instead of a bare 404.
+func (s *Server) staticHandler() http.Handler {
+	var fsys fs.FS
+	if s.webDir != "" {
+		if st, err := os.Stat(filepath.Join(s.webDir, "index.html")); err == nil && !st.IsDir() {
+			fsys = os.DirFS(s.webDir)
+			log.Printf("[Web] Serving UI from directory %s", s.webDir)
+		}
+	}
+	if fsys == nil {
+		sub, err := fs.Sub(cnssowa.WebFS, "web")
+		if err != nil {
+			log.Printf("[Web] FATAL: embedded web UI unavailable: %v", err)
+			return http.NotFoundHandler()
+		}
+		fsys = sub
+		log.Println("[Web] Serving embedded UI (single-binary mode)")
+	}
 
-		if r.Method == "OPTIONS" {
-			w.WriteHeader(http.StatusOK)
+	fileServer := http.FileServer(http.FS(fsys))
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		p := strings.TrimPrefix(path.Clean(r.URL.Path), "/")
+		if p == "" {
+			p = "index.html"
+		}
+		if _, err := fs.Stat(fsys, p); err != nil {
+			// SPA fallback: unknown page routes load the app shell;
+			// missing real assets still get a 404
+			if path.Ext(p) == "" {
+				data, readErr := fs.ReadFile(fsys, "index.html")
+				if readErr == nil {
+					w.Header().Set("Content-Type", "text/html; charset=utf-8")
+					w.Write(data)
+					return
+				}
+			}
+			http.NotFound(w, r)
 			return
 		}
+		fileServer.ServeHTTP(w, r)
+	})
+}
 
+// securityMiddleware adds standard security headers. The UI is served
+// same-origin, so no CORS allowances are needed (the previous wildcard
+// Access-Control-Allow-Origin has been removed on purpose).
+func (s *Server) securityMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.Header().Set("X-Frame-Options", "DENY")
+		w.Header().Set("Referrer-Policy", "no-referrer")
 		next.ServeHTTP(w, r)
 	})
 }
@@ -176,8 +224,21 @@ func (s *Server) handleStats(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleConfig(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
-		// Return current config (without sensitive fields)
-		jsonResponse(w, s.cfg)
+		// Return current config without sensitive fields
+		data, err := json.Marshal(s.cfg)
+		if err != nil {
+			http.Error(w, "Failed to serialize config", http.StatusInternalServerError)
+			return
+		}
+		var redacted map[string]interface{}
+		if err := json.Unmarshal(data, &redacted); err != nil {
+			http.Error(w, "Failed to serialize config", http.StatusInternalServerError)
+			return
+		}
+		if authSection, ok := redacted["auth"].(map[string]interface{}); ok {
+			delete(authSection, "password_hash")
+		}
+		jsonResponse(w, redacted)
 
 	case "PUT":
 		var partial map[string]json.RawMessage
@@ -655,7 +716,7 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 		"dns_running":     s.dns.IsRunning(),
 		"dhcp_running":    s.dhcp.IsRunning(),
 		"protection":      s.cfg.Filtering.Enabled,
-		"version":         "1.4.4",
+		"version":         version.Version,
 		"cache_size":      s.dns.CacheSize(),
 		"dhcp_leases":     s.dhcp.GetLeaseCount(),
 		"uptime":          int64(uptime.Seconds()),
@@ -757,6 +818,8 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 		Value:    resp.Token,
 		Path:     "/",
 		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
+		Secure:   s.cfg.Web.TLS,
 		MaxAge:   s.cfg.Auth.SessionTTL * 3600,
 	})
 
@@ -928,7 +991,7 @@ func (s *Server) handleSystemInfo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	jsonResponse(w, map[string]interface{}{
-		"version":  "1.4.4",
+		"version":  version.Version,
 		"dns_port": s.cfg.DNS.Port,
 		"web_port": s.cfg.Web.Port,
 		"ips":      ips,
@@ -1098,7 +1161,7 @@ func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 		"uptime":       int64(uptime.Seconds()),
 		"uptime_human": formatDuration(uptime),
 		"start_time":   s.startTime.Format(time.RFC3339),
-		"version":      "1.4.4",
+		"version":      version.Version,
 		"go_version":   runtime.Version(),
 		"os":           runtime.GOOS,
 		"arch":         runtime.GOARCH,
@@ -1457,4 +1520,14 @@ func (s *Server) handleUpstreamTest(w http.ResponseWriter, r *http.Request) {
 func jsonResponse(w http.ResponseWriter, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(data)
+}
+
+// displayHost converts a bind address into one a browser can open:
+// wildcard addresses (0.0.0.0, ::, empty) are shown as 127.0.0.1
+func displayHost(bindHost string) string {
+	switch bindHost {
+	case "", "0.0.0.0", "::", "[::]":
+		return "127.0.0.1"
+	}
+	return bindHost
 }

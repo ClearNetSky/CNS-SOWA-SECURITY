@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark light">
     <title>S.O.W.A Security - DNS Protection</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230a0e17'/%3E%3Cpath d='M32 8l20 8v16c0 12-8 20-20 24C20 52 12 44 12 32V16L32 8z' fill='%2300d4ff' opacity='0.2'/%3E%3Cpath d='M32 12l16 6.4v12.8c0 9.6-6.4 16-16 19.2-9.6-3.2-16-9.6-16-19.2V18.4L32 12z' fill='none' stroke='%2300d4ff' stroke-width='2'/%3E%3Ctext x='32' y='42' text-anchor='middle' font-size='20' font-weight='bold' fill='%2300d4ff' font-family='Arial'%3ES%3C/text%3E%3C/svg%3E">
     <link rel="stylesheet" href="/css/style.css">
@@ -64,7 +65,7 @@
                             </div>
                             <div class="form-group">
                                 <label><i class="fas fa-lock"></i> Password</label>
-                                <input type="password" id="setupPassword" placeholder="Min. 4 characters" autocomplete="new-password">
+                                <input type="password" id="setupPassword" placeholder="Min. 8 characters" autocomplete="new-password">
                                 <div class="password-strength" id="passwordStrength"></div>
                             </div>
                             <div class="form-group">
@@ -201,16 +202,19 @@
                     <i class="fas fa-shield-halved"></i>
                     <span class="logo-text">S.O.W.A</span>
                 </div>
-                <span class="version">v1.4.4</span>
+                <span class="version">v1.5.0</span>
             </div>
-            
+
             <ul class="nav-menu">
+                <li class="nav-section">Overview</li>
                 <li class="nav-item active" data-page="dashboard">
                     <a href="#dashboard"><i class="fas fa-chart-line"></i><span>Dashboard</span></a>
                 </li>
-                <li class="nav-item" data-page="settings">
-                    <a href="#settings"><i class="fas fa-cog"></i><span>General Settings</span></a>
+                <li class="nav-item" data-page="querylog">
+                    <a href="#querylog"><i class="fas fa-clipboard-list"></i><span>Query Log</span></a>
                 </li>
+
+                <li class="nav-section">Protection</li>
                 <li class="nav-item" data-page="filters">
                     <a href="#filters"><i class="fas fa-filter"></i><span>Filters</span></a>
                 </li>
@@ -226,26 +230,30 @@
                 <li class="nav-item" data-page="blocked-services">
                     <a href="#blocked-services"><i class="fas fa-ban"></i><span>Blocked Services</span></a>
                 </li>
+
+                <li class="nav-section">Network</li>
+                <li class="nav-item" data-page="dns">
+                    <a href="#dns"><i class="fas fa-server"></i><span>DNS Settings</span></a>
+                </li>
                 <li class="nav-item" data-page="dns-rewrites">
                     <a href="#dns-rewrites"><i class="fas fa-exchange-alt"></i><span>DNS Rewrites</span></a>
-                </li>
-                <li class="nav-item" data-page="clients">
-                    <a href="#clients"><i class="fas fa-laptop"></i><span>Clients</span></a>
                 </li>
                 <li class="nav-item" data-page="dhcp">
                     <a href="#dhcp"><i class="fas fa-network-wired"></i><span>DHCP</span></a>
                 </li>
-                <li class="nav-item" data-page="dns">
-                    <a href="#dns"><i class="fas fa-server"></i><span>DNS Settings</span></a>
+                <li class="nav-item" data-page="clients">
+                    <a href="#clients"><i class="fas fa-laptop"></i><span>Clients</span></a>
                 </li>
                 <li class="nav-item" data-page="encryption">
                     <a href="#encryption"><i class="fas fa-lock"></i><span>Encryption</span></a>
                 </li>
-                <li class="nav-item" data-page="querylog">
-                    <a href="#querylog"><i class="fas fa-clipboard-list"></i><span>Query Log</span></a>
-                </li>
                 <li class="nav-item" data-page="access">
                     <a href="#access"><i class="fas fa-user-shield"></i><span>Access Control</span></a>
+                </li>
+
+                <li class="nav-section">System</li>
+                <li class="nav-item" data-page="settings">
+                    <a href="#settings"><i class="fas fa-cog"></i><span>General Settings</span></a>
                 </li>
                 <li class="nav-item" data-page="sessions">
                     <a href="#sessions"><i class="fas fa-key"></i><span>Sessions</span></a>
@@ -346,21 +354,21 @@
                         </div>
                     </div>
                     <div class="stat-card" data-animate="fadeInUp" style="--delay: 0.6s">
-                        <div class="stat-icon" style="background: linear-gradient(135deg, rgba(0, 170, 255, 0.15), rgba(0, 170, 255, 0.05)); color: #00aaff;"><i class="fas fa-layer-group"></i></div>
+                        <div class="stat-icon layers"><i class="fas fa-layer-group"></i></div>
                         <div class="stat-info">
                             <h3 id="cachedQueries">0</h3>
                             <p>Cached Queries</p>
                         </div>
                     </div>
                     <div class="stat-card" data-animate="fadeInUp" style="--delay: 0.7s">
-                        <div class="stat-icon" style="background: linear-gradient(135deg, rgba(123, 47, 255, 0.15), rgba(123, 47, 255, 0.05)); color: #7b2fff;"><i class="fas fa-shield-alt"></i></div>
+                        <div class="stat-icon rules"><i class="fas fa-shield-alt"></i></div>
                         <div class="stat-info">
                             <h3 id="filteringRules">0</h3>
                             <p>Filtering Rules</p>
                         </div>
                     </div>
                     <div class="stat-card" data-animate="fadeInUp" style="--delay: 0.8s">
-                        <div class="stat-icon" style="background: linear-gradient(135deg, rgba(255, 170, 0, 0.15), rgba(255, 170, 0, 0.05)); color: #ffaa00;"><i class="fas fa-hand-paper"></i></div>
+                        <div class="stat-icon ratelimit"><i class="fas fa-hand-paper"></i></div>
                         <div class="stat-info">
                             <h3 id="rateLimitedQueries">0</h3>
                             <p>Rate Limited</p>

@@ -20,12 +20,12 @@ import (
 	"github.com/ClearNetSky/CNS-SOWA-SECURITY/internal/dnsserver"
 	"github.com/ClearNetSky/CNS-SOWA-SECURITY/internal/filtering"
 	"github.com/ClearNetSky/CNS-SOWA-SECURITY/internal/stats"
+	"github.com/ClearNetSky/CNS-SOWA-SECURITY/internal/version"
 )
 
 const (
-	appName    = "S.O.W.A Security"
-	appVersion = "1.4.4"
-	banner     = `
+	appName      = "S.O.W.A Security"
+	bannerFormat = `
 ╔══════════════════════════════════════════════════════════════╗
 ║                                                              ║
 ║     ███████╗ ██████╗ ██╗    ██╗ █████╗                       ║
@@ -35,15 +35,18 @@ const (
 ║     ███████║╚██████╔╝╚███╔███╔╝██║  ██║                      ║
 ║     ╚══════╝ ╚═════╝  ╚══╝╚══╝ ╚═╝  ╚═╝                      ║
 ║                                                              ║
-║         S.O.W.A Security Software v1.4.4                     ║
+║         S.O.W.A Security Software v%-8s                  ║
 ║         DNS Protection & Filtering                           ║
 ║         by C.N.S (Clear Net Sky)                             ║
 ║                                                              ║
-║         https://github.com/ClearNetSky/CNS-SOWA-SECURITY ║
+║         https://github.com/ClearNetSky/CNS-SOWA-SECURITY     ║
 ║                                                              ║
 ╚══════════════════════════════════════════════════════════════╝
 `
 )
+
+var appVersion = version.Version
+var banner = fmt.Sprintf(bannerFormat, appVersion)
 
 func main() {
 	// Parse command-line flags
@@ -186,6 +189,13 @@ func main() {
 	// Detect local network IPs
 	localIPs := getLocalIPs()
 
+	// Wildcard bind addresses (0.0.0.0) are not clickable in a browser —
+	// show localhost instead
+	webHost := cfg.Web.BindHost
+	if webHost == "" || webHost == "0.0.0.0" || webHost == "::" {
+		webHost = "127.0.0.1"
+	}
+
 	log.Println("[Main] ════════════════════════════════════════════")
 	log.Printf("[Main]  S.O.W.A Security is running!")
 	log.Printf("[Main]  DNS Server:    %s:%d", cfg.DNS.BindHost, cfg.DNS.Port)
@@ -195,7 +205,7 @@ func main() {
 	if cfg.DNS.DOTEnabled {
 		log.Printf("[Main]  DNS-over-TLS:   %s:%d", cfg.DNS.BindHost, cfg.DNS.DOTPort)
 	}
-	log.Printf("[Main]  Web Interface: http://%s:%d", cfg.Web.BindHost, cfg.Web.Port)
+	log.Printf("[Main]  Web Interface: http://%s:%d", webHost, cfg.Web.Port)
 	log.Printf("[Main]  Data Dir:      %s", dataDir)
 	log.Println("[Main] ────────────────────────────────────────────")
 	log.Printf("[Main]  Access your dashboard from:")

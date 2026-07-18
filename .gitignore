@@ -25,5 +25,7 @@ Thumbs.db
 # Data (runtime)
 /data/config/config.json
 /data/config/stats.json
+/data/config/sessions.json
+/data/config/querylog.json
 /data/blacklist/*.txt
 /data/whitelist/*.txt
